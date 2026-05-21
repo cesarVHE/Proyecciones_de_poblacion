@@ -247,10 +247,24 @@ function obtenerDatosFiltradosActuales() {
 
     geojsonData.features.forEach(feature => {
         let cvegeo = feature.properties.CVEGEO || feature.properties.cvegeo || "";
-        let nombreMun = feature.properties.NOMGEO || feature.properties.nom_mun || "Desconocido";
         
+        // Buscar correspondencia en el JSON cargado en memoria
         let metadata = extraerFilaPoblacionYEstado(cvegeo, año, sexo);
-        let nombreEnt = metadata.estado;
+        
+        // Extraer Estado y Municipio directamente de tu base de datos tabular
+        let nombreEnt = "Desconocido";
+        let nombreMun = "Desconocido";
+        
+        if (metadata.filas && metadata.filas.length > 0) {
+            let registro = metadata.filas[0];
+            nombreEnt = registro.NOM_ENT || registro.nom_ent || "Desconocido";
+            nombreMun = registro.NOM_MUN || registro.nom_mun || "Desconocido";
+        }
+        
+        // Respaldo por si no coincide con el JSON
+        if (nombreMun === "Desconocido") {
+            nombreMun = feature.properties.NOMGEO || feature.properties.nom_mun || "Desconocido";
+        }
         
         let valorPob = obtenerValorPoblacion(cvegeo, año, sexo, grupoEdad);
 
