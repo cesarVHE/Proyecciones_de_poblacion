@@ -147,7 +147,7 @@ function estiloMunicipio(feature) {
     };
 }
 
-// 5. Interacción de MouseOver síncrona
+// 5. Interacción de MouseOver síncrona (Corrige polígonos atascados en INEGI)
 function onEachFeature(feature, layer) {
     layer.on({
         mouseover: function(e) {
@@ -169,11 +169,31 @@ function onEachFeature(feature, layer) {
             const grupoEdad = document.getElementById("select-age").value;
             
             let codigoMunicipio = feature.properties.CVEGEO || feature.properties.cvegeo || "N/A";
+            
+            // Buscar metadatos en el JSON cargado en memoria
+            let metadata = extraerFilaPoblacionYEstado(codigoMunicipio, año, sexo);
+            
+            // Extraer el Estado (NOM_ENT) y el Municipio (NOM_MUN) de la tabla JSON
+            let nomEstado = "Desconocido";
+            let nomMunTabular = "Desconocido";
+            
+            if (metadata.filas && metadata.filas.length > 0) {
+                let registro = metadata.filas[0];
+                nomEstado = registro.NOM_ENT || registro.nom_ent || "Desconocido";
+                nomMunTabular = registro.NOM_MUN || registro.nom_mun || "Desconocido";
+            }
+            
+            // Si por alguna razón no está en el JSON, usamos el del mapa base como respaldo
+            if (nomMunTabular === "Desconocido") {
+                nomMunTabular = feature.properties.NOMGEO || feature.properties.nom_mun || 'Desconocido';
+            }
+            
             const valor = obtenerValorPoblacion(codigoMunicipio, año, sexo, grupoEdad);
-            let nomMun = feature.properties.NOMGEO || feature.properties.nom_mun || 'Desconocido';
 
+            // POPUP PERFECCIONADO: Con NOM_MUN y NOM_ENT mapeados desde el JSON
             let popupContent = `
-                <strong>Municipio:</strong> ${nomMun}<br>
+                <strong>Municipio:</strong> ${nomMunTabular}<br>
+                <strong>Estado:</strong> ${nomEstado}<br>
                 <strong>Clave Geográfica (CVEGEO):</strong> ${codigoMunicipio}<br>
                 <hr style="margin:4px 0; border:0; border-top:1px solid #ccc;">
                 <strong>Año:</strong> ${año}<br>
